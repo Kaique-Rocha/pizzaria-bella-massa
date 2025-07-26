@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pizzaria Bella Massa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; font-family: 'Quicksand', sans-serif; }
+    body { margin: 0; padding: 0; background-color: #f7f3f0; color: #3e2723; }
+    header { background: #d84315; color: white; padding: 1rem; text-align: center; }
+    h1 { margin: 0; }
+    .container { padding: 2rem; max-width: 1000px; margin: auto; }
+    .cardapio { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; }
+    .item { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 1rem; width: 260px; text-align: center; }
+    .item img { max-width: 100%; border-radius: 8px; height: 160px; object-fit: cover; }
+    .item h3 { margin: 0.5rem 0 0.3rem; }
+    .item p { margin: 0; font-weight: bold; }
+    .item input, .item button { margin-top: 0.5rem; padding: 0.4rem; width: 100%; border-radius: 5px; border: 1px solid #ccc; }
+    .item button { background-color: #d84315; color: white; border: none; cursor: pointer; transition: 0.3s; }
+    .item button:hover { background-color: #bf360c; }
+    #carrinho { background: #ffe0b2; padding: 1rem; border-radius: 8px; margin-top: 2rem; }
+    #carrinho ul { list-style: none; padding: 0; }
+    #carrinho li { margin-bottom: 0.5rem; }
+    #carrinho button { background-color: #e64a19; margin-left: 0.5rem; }
+    footer { text-align: center; padding: 1rem; background: #d84315; color: white; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pizzaria Bella Massa</h1>
+    <p>Sabores irresistíveis direto do forno à lenha 🍕</p>
+  </header>
+
+  <div class="container">
+    <section id="cardapio" class="cardapio"></section>
+
+    <section id="carrinho">
+      <h2>Seu Pedido</h2>
+      <ul id="lista-pedidos"></ul>
+      <p>Total: R$ <span id="total">0.00</span></p>
+      <button onclick="enviarPedido()">Enviar pedido pelo WhatsApp</button>
+    </section>
+  </div>
+
+  <footer>
+    &copy; 2025 Pizzaria Bella Massa. Todos os direitos reservados.
+  </footer>
+
+  <script>
+    const cardapio = [
+      { id: 1, nome: "Pizza Margherita", preco: 79.90, imagem: "./src/img/margherita.jpg" },
+      { id: 2, nome: "Pizza Calabresa", preco: 92.00, imagem: "./src/img/calabresa.jpg" },
+      { id: 3, nome: "Pizza Portuguesa", preco: 95.00, imagem: "./src/img/portuguesa.jpg" },
+      { id: 4, nome: "Pizza 4 Queijos", preco: 94.00, imagem: "./src/img/4queijos.webp" },
+      { id: 5, nome: "Refrigerante 2L", preco: 90.00, imagem: "./src/img/dolly.webp" },
+      { id: 6, nome: "Água Mineral", preco: 94.00, imagem: "./src/img/agua.jpg" }
+    ];
+
+    const carrinho = [];
+
+    function adicionarItem(id) {
+      const item = cardapio.find(produto => produto.id === id);
+      const itemExistente = carrinho.find(p => p.id === id);
+      const obs = document.getElementById(`obs-${id}`).value;
+
+      if (itemExistente) {
+        itemExistente.quantidade++;
+      } else {
+        carrinho.push({ ...item, quantidade: 1, observacao: obs });
+      }
+
+      atualizarCarrinho();
+    }
+
+    function removerItem(id) {
+      const index = carrinho.findIndex(p => p.id === id);
+      if (index !== -1) {
+        if (carrinho[index].quantidade > 1) {
+          carrinho[index].quantidade--;
+        } else {
+          carrinho.splice(index, 1);
+        }
+        atualizarCarrinho();
+      }
+    }
+
+    function atualizarCarrinho() {
+      const lista = document.getElementById("lista-pedidos");
+      const totalSpan = document.getElementById("total");
+      lista.innerHTML = "";
+      let total = 0;
+
+      carrinho.forEach(item => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          ${item.nome} (x${item.quantidade}) - R$ ${(item.preco * item.quantidade).toFixed(2)}
+          <br><small>Obs: ${item.observacao || "nenhuma"}</small>
+          <button onclick="removerItem(${item.id})">Remover</button>
+        `;
+        lista.appendChild(li);
+        total += item.preco * item.quantidade;
+      });
+
+      totalSpan.textContent = total.toFixed(2);
+    }
+
+    function enviarPedido() {
+      if (carrinho.length === 0) {
+        alert("Adicione ao menos 1 item ao pedido.");
+        return;
+      }
+
+      let mensagem = "Olá, gostaria de fazer o seguinte pedido:\n\n";
+      carrinho.forEach(item => {
+        mensagem += `- ${item.nome} (x${item.quantidade}) - R$ ${(item.preco * item.quantidade).toFixed(2)}`;
+        if (item.observacao) mensagem += ` | Obs: ${item.observacao}`;
+        mensagem += "\n";
+      });
+      const total = carrinho.reduce((acc, item) => acc + item.preco * item.quantidade, 0);
+      mensagem += `\nTotal: R$ ${total.toFixed(2)}`;
+
+      const numeroWhatsapp = "5511995481647"; 
+      const url = `https://wa.me/${numeroWhatsapp}?text=${encodeURIComponent(mensagem)}`;
+      window.open(url, '_blank');
+    }
+
+    // Renderiza o cardápio ao carregar
+    window.onload = () => {
+      const menu = document.getElementById("cardapio");
+      cardapio.forEach(produto => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <img src="${produto.imagem}" alt="${produto.nome}" />
+          <h3>${produto.nome}</h3>
+          <p>R$ ${produto.preco.toFixed(2)}</p>
+          <input id="obs-${produto.id}" placeholder="Observações (opcional)" />
+          <button onclick="adicionarItem(${produto.id})">Adicionar</button>
+        `;
+        menu.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
